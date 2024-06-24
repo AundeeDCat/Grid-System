@@ -67,4 +67,14 @@ public class GridGenerator : MonoBehaviour
             tile.GetComponent<Renderer>().material = material;
         }
     }
+
+    public void AssignTileScript()
+    {
+        GameObject[] tiles = GameObject.FindGameObjectsWithTag("Tile");
+        Material material = tileTexture; //Resources.Load<Material>("VioletTile");
+        foreach (GameObject tile in tiles)
+        {
+            tile.AddComponent<Tile>();
+        }
+    }
 }
