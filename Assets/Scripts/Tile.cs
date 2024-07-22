@@ -5,46 +5,58 @@ using UnityEngine;
 
 public class Tile : MonoBehaviour
 {
-    public bool current;
-    public bool target;
-    public bool selectable;
-    public bool walkable;
 
+    public GameObject Player;
+
+    int layerMask = 1 << 8;
+
+    public string currentPosition;
+    public string targetPosition = "4, 4";
+
+    public bool current;
+    public bool target = false;
+    public bool selectable;
+    public bool walkable = true;
+
+
+    public Material currentTileTexture;
+    public Material targetTileTexture;
+    public Material selectableTileTexture;
+    public Material walkableTileTexture;
+    public Material obstacleTileTexture;
 
     //Needed for BFS
     public bool visited = false;
     public Tile parent = null;
     public int distance = 0;
 
-    public List<Tile> adjacencyList = new List<Tile>();
+    private int visitedTiles = 0;
+    private bool startedBuilding = false;
+
+    int xCoordinate = 0;
+    int zCoordinate = 0;
+
+    float timePassed = 0f;
+
+    public List<string> adjacencyList = new List<string>();
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (current)
-        {
-            GetComponent<Renderer>().material.color = Color.green;
-   
-        }
+        //AssignCoordinates();
 
-        else if (target)
-        {
-            GetComponent<Renderer>().material.color = Color.red;
-        }
+        FindPlayerPosition();
 
-        else if (selectable)
+        timePassed += Time.deltaTime;
+        if (timePassed > 0.25f)
         {
-            GetComponent<Renderer>().material.color = Color.blue;
-        }
-        
-        else
-        {
-            GetComponent<Renderer>().material.color = Color.white;
+            DLS();
+            timePassed = 0f;
         }
     }
 
@@ -56,35 +68,96 @@ public class Tile : MonoBehaviour
         target = false;
         selectable = false;
 
-        visited = false;
+        //visited = false;
         parent = null;
         distance = 0;
     }
 
-    public void FindNeighbors(float jumpHeight)
+    public void FindNeighbors()
     {
-        ResetValues();
-        CheckTiles(Vector3.forward, jumpHeight);
-        CheckTiles(Vector3.back, jumpHeight);
-        CheckTiles(Vector3.right, jumpHeight);
-        CheckTiles(Vector3.left, jumpHeight);
+        //ResetValues();
+        /*
+        if (Convert.ToInt32(targetPosition.transform.gameObject.name[0]) > Convert.ToInt32(currentPosition.transform.gameObject.name[0]))
+        {
+            CheckTile(Vector3.right);
+        }
+
+        if (Convert.ToInt32(targetPosition.transform.gameObject.name[0]) < Convert.ToInt32(currentPosition.transform.gameObject.name[0]))
+        {
+            CheckTile(Vector3.left);
+        }
+
+        if (Convert.ToInt32(targetPosition.transform.gameObject.name[3]) > Convert.ToInt32(currentPosition.transform.gameObject.name[3]))
+        {
+            CheckTile(Vector3.right);
+        }
+
+        if (Convert.ToInt32(targetPosition.transform.gameObject.name[3]) < Convert.ToInt32(currentPosition.transform.gameObject.name[3]))
+        {
+            CheckTile(Vector3.left);
+        }
+        */
+
+        switch(Random.Range(0, 4))
+        {
+            case 3:
+                CheckTile(Vector3.forward);
+                break;
+            case 2:
+                CheckTile(Vector3.back);
+                break;
+            case 1:
+                CheckTile(Vector3.left);
+                break;
+            default:
+                CheckTile(Vector3.right);
+                break;
+        }
+            
+            
+
     }
 
-    public void CheckTiles(Vector3 direction, float jumpHeight)
+    
+    public void CheckTile(Vector3 direction)
     {
-        Vector3 halfExtents = new Vector3(0.25f, (1 + jumpHeight), 0.25f);
-        Collider[] colliders = Physics.OverlapBox(transform.position + direction, halfExtents);
-        foreach (Collider item in colliders)
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, Vector3.up, out hit, layerMask))
         {
-            Tile tile = item.GetComponent<Tile>();
-            if (tile != null && tile.walkable)
+            if (Physics.Raycast(this.transform.position, direction, out hit, 0.75f))
             {
-                RaycastHit hit;
-                if(Physics.Raycast(tile.transform.position, Vector3.up, out hit, 1))
+                Tile travelToTile = hit.transform.gameObject.GetComponent<Tile>();
+
+                if (hit.transform.gameObject != null && this.gameObject.name == currentPosition && travelToTile.visited == false)
                 {
-                    adjacencyList.Add(tile);
+                    //adjacencyList.Add(hit.transform.gameObject.name);
+                    if (currentPosition != targetPosition) Player.transform.position = new Vector3(hit.transform.position.x, 1f, hit.transform.position.z);
+                    
+                    visited = true;
+
+                    Debug.Log(hit.transform.position.x + ", " + hit.transform.position.z);
+                    this.GetComponent<Renderer>().material = selectableTileTexture;
                 }
             }
         }
+    }
+    
+
+    public void FindPlayerPosition()
+    {
+        RaycastHit hit;
+        // Does the ray intersect any objects excluding the player layer
+        if (Physics.Raycast(transform.position, Vector3.up, out hit, layerMask))
+        {
+
+            Debug.DrawRay(transform.position, Vector3.up * hit.distance, Color.yellow);
+            currentPosition = this.transform.gameObject.name;
+            //Debug.Log(currentPosition);
+        }
+    }
+
+    public void DLS()
+    {
+        FindNeighbors();
     }
 }

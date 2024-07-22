@@ -7,9 +7,11 @@ public class GridGenerator : MonoBehaviour
     [SerializeField]
     public int width, height, depth;
 
-
     public GameObject tilePrefab;
     public Material tileTexture;
+    public Material targetTexture;
+
+    int gapChance = 10; // 1 in 5 chance
 
     // Start is called before the first frame update
     void Start()
@@ -44,6 +46,17 @@ public class GridGenerator : MonoBehaviour
                     GameObject newTile = Instantiate(tilePrefab, position, Quaternion.identity);
                     newTile.transform.parent = transform;
                     newTile.tag = "Tile";
+                    newTile.name = x + ", " + z;
+
+                    if (x==4 && z==4)
+                    {
+                        newTile.GetComponent<Renderer>().material = targetTexture;
+                    }
+                    
+                    else if(Random.Range(1, gapChance) == 1)
+                    {
+                        Destroy(newTile);
+                    }
                 }
             }
         }
@@ -77,4 +90,5 @@ public class GridGenerator : MonoBehaviour
             tile.AddComponent<Tile>();
         }
     }
+
 }
